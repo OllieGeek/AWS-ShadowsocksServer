@@ -20,7 +20,7 @@ security_group_id=$(aws ec2 describe-security-groups --region $region --group-na
 
 printf "{\"server\": \"0.0.0.0\",\"server_port\": \"$shadowsocks_port\",\"local_port\": \"1080\",\"method\": \"$shadowsocks_ciph\",\"fast_open\": true,\"password\": \"$shadowsocks_pass\",\"nameserver\": \"1.0.0.1\",\"nameserver\": \"1.1.1.1\",\"mode\": \"tcp_and_udp\",\"timeout\": 300}" | sudo tee /opt/shadowsocks/ss-server_$shadowsocks_port.conf 
 
-SSURI="ss://$userdata@$external_ip:$shadowsocks_port#$instance_id:$shadowsocks_port%20($region)" 
+SSURI="ss://$userdata@$external_ip:$shadowsocks_port#$instance_id%20(port:%20$shadowsocks_port%20/%20region:%20$region)" 
 
 echo "$SSURI" | sudo tee /opt/shadowsocks/client-url_$shadowsocks_port.txt
 sudo chown ec2-user:root /opt/shadowsocks/client-url_$shadowsocks_port.txt
