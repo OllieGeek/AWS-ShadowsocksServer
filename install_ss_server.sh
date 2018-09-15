@@ -25,7 +25,7 @@ echo '''* soft nofile 51200
 
 ulimit -n 51200
 
-sudo mv /etc/sysctl.conf /home/ec2-user/sysctl.conf.BAK
+sudo mv /etc/sysctl.conf /home/ec2-user/config-backup/sysctl.conf.BAK
 sudo touch /etc/sysctl.conf
 
 echo '''fs.file-max = 51200
