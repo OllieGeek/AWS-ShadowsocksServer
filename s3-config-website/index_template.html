@@ -7,11 +7,12 @@
 			body { width: 400px; margin: 0 auto; background-color: black; color: white; }
 			a { color: lightblue; }
 			.main { padding-bottom: 2em; }
-			.container { width: 100%;word-break: break-all; padding: 0.5em; border: 1px solid white; border-radius: 3px; }
+			.container { width: 100%;word-break: break-all; padding: 0.5em; border: 1px solid white; border-radius: 3px; margin-bottom: 0.5em; }
 			.blob { font-size:0.8em; }
 			.container p { font-size:0.8em; }
 			.container span { font-weight: bold; }
 			.encrypted { display: none; width:400px; }
+			.disabled { cursor: not-allowed; }
 		</style>
     </head>
     <body>
@@ -23,7 +24,7 @@
 				<input type="button" value="Decrypt" id="btnDecrypt" />
 			</p>
 		</div>
-		<div class="encrypted">INPUT_FROM_GENERATOR</div>
+		<div class="encrypted"><p>Shadowsocks endpoint(s):<br><span style="font-size: 0.9em;">(each endpoint will have a different port and password)</span></p>INPUT_FROM_GENERATOR</div>
 
         <script src="jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
         <script src="crypto-js.min.js" integrity="sha256-u6BamZiW5tCemje2nrteKC2KoLIKX9lKPSpvCkOhamw=" crossorigin="anonymous"></script>
@@ -47,8 +48,8 @@
 						break;
 					} else {
 						if (first) {
-							$("#inputPassword").prop("disabled", "disabled");
-							$("#btnDecrypt").prop("disabled", "disabled");
+							$("#inputPassword").prop("disabled", "disabled").addClass("disabled");
+							$("#btnDecrypt").prop("disabled", "disabled").addClass("disabled");
 							first = false;
 							$(".encrypted").show();
 						}
