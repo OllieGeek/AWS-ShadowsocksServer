@@ -1,0 +1,664 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Metadata": {
+        "AWS::CloudFormation::Interface": {
+            "ParameterGroups": [
+                {
+                    "Label": {
+                        "default": "Network Configuration"
+                    },
+                    "Parameters": [
+                        "MyVpcId",
+                        "MySubnetID"
+                    ]
+                },
+                {
+                    "Label": {
+                        "default": "Resource Configuration"
+                    },
+                    "Parameters": [
+                        "MyKeyPair",
+                        "InstanceType",
+                        "PublicSSHRule",
+                        "ProjectTagValue"
+                    ]
+                },
+                {
+                    "Label": {
+                        "default": "Shadowsocks Configuration"
+                    },
+                    "Parameters": [
+                        "TempConfigPassword",
+                        "SSEndpoints"
+                    ]
+                }
+            ],
+            "ParameterLabels": {
+                "MyVpcId": {
+                    "default": "Which VPC should this be deployed to?"
+                },
+                "MySubnetID": {
+                    "default": "Which public subnet should this be deployed to?"
+                },
+                "MyKeyPair": {
+                    "default": "Which Key Pair for the Shadowsocks server?"
+                },
+                "InstanceType": {
+                    "default": "What instance type for the Shadowsocks server?"
+                },
+                "PublicSSHRule": {
+                    "default": "Allow public SSH access?"
+                },
+                "ProjectTagValue": {
+                    "default": "Tag value for 'Project' tag on created resources?"
+                },
+                "TempConfigPassword": {
+                    "default": "Enter a temporary password"
+                },
+                "SSEndpoints": {
+                    "default": "How many endpoints to create?"
+                }
+            }
+        },
+        "AWS::CloudFormation::Designer": {
+            "401b99d9-5513-4894-9927-bcd36a101e73": {
+                "size": {
+                    "width": 60,
+                    "height": 60
+                },
+                "position": {
+                    "x": 420,
+                    "y": 290
+                },
+                "z": 1,
+                "embeds": [],
+                "isassociatedwith": [
+                    "4d1b36c6-d8b4-4dbc-a173-e749ec822592"
+                ]
+            },
+            "4d1b36c6-d8b4-4dbc-a173-e749ec822592": {
+                "size": {
+                    "width": 60,
+                    "height": 60
+                },
+                "position": {
+                    "x": 280,
+                    "y": 290
+                },
+                "z": 1,
+                "embeds": []
+            },
+            "5467bcd7-45fc-4b78-a995-bffa2f670fea": {
+                "size": {
+                    "width": 60,
+                    "height": 60
+                },
+                "position": {
+                    "x": 140,
+                    "y": 160
+                },
+                "z": 1,
+                "embeds": []
+            },
+            "9a5da83f-d26f-412b-aa03-b82e31027cae": {
+                "size": {
+                    "width": 60,
+                    "height": 60
+                },
+                "position": {
+                    "x": 280,
+                    "y": 160
+                },
+                "z": 1,
+                "embeds": []
+            },
+            "a597ff90-511a-4fdb-aad9-e33890703b0a": {
+                "size": {
+                    "width": 60,
+                    "height": 60
+                },
+                "position": {
+                    "x": 420,
+                    "y": 160
+                },
+                "z": 1,
+                "embeds": [],
+                "isassociatedwith": [
+                    "9a5da83f-d26f-412b-aa03-b82e31027cae"
+                ]
+            }
+        }
+    },
+    "Resources": {
+        "S3B1BPO1": {
+            "Type": "AWS::S3::Bucket",
+            "Properties": {
+                "Tags": [
+                    {
+                        "Key": "Project",
+                        "Value": {
+                            "Ref": "ProjectTagValue"
+                        }
+                    }
+                ],
+                "AccessControl": "PublicRead",
+                "WebsiteConfiguration": {
+                    "IndexDocument": "index.html"
+                }
+            },
+            "Metadata": {
+                "AWS::CloudFormation::Designer": {
+                    "id": "5467bcd7-45fc-4b78-a995-bffa2f670fea"
+                }
+            }
+        },
+        "RootRole": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": [
+                                    "ec2.amazonaws.com"
+                                ]
+                            },
+                            "Action": [
+                                "sts:AssumeRole"
+                            ]
+                        }
+                    ]
+                },
+                "Path": "/",
+                "Policies": [
+                    {
+                        "PolicyName": "CustomInline",
+                        "PolicyDocument": {
+                            "Version": "2012-10-17",
+                            "Statement": [
+                                {
+                                    "Sid": "Stmt1536863924277",
+                                    "Action": [
+                                        "ec2:DescribeSecurityGroups"
+                                    ],
+                                    "Effect": "Allow",
+                                    "Resource": "*"
+                                },
+                                {
+                                    "Sid": "Stmt1536863924278",
+                                    "Action": [
+                                        "s3:*"
+                                    ],
+                                    "Effect": "Allow",
+                                    "Resource": {
+                                        "Fn::Join": [
+                                            "/",
+                                            [
+                                                {
+                                                    "Fn::GetAtt": [
+                                                        "S3B1BPO1",
+                                                        "Arn"
+                                                    ]
+                                                },
+                                                "*"
+                                            ]
+                                        ]
+                                    }
+                                },
+                                {
+                                    "Sid": "Stmt1536863924279",
+                                    "Action": [
+                                        "ec2:AuthorizeSecurityGroupIngress",
+                                        "ec2:RevokeSecurityGroupIngress",
+                                        "ec2:UpdateSecurityGroupRuleDescriptionsIngress"
+                                    ],
+                                    "Effect": "Allow",
+                                    "Resource": {
+                                        "Fn::Join": [
+                                            "",
+                                            [
+                                                "arn:aws:ec2:",
+                                                {
+                                                    "Ref": "AWS::Region"
+                                                },
+                                                ":",
+                                                {
+                                                    "Ref": "AWS::AccountId"
+                                                },
+                                                ":security-group/",
+                                                {
+                                                    "Fn::GetAtt": [
+                                                        "EC2SG3RU0O",
+                                                        "GroupId"
+                                                    ]
+                                                }
+                                            ]
+                                        ]
+                                    }
+                                },
+                                {
+                                    "Sid": "Stmt1536863924280",
+                                    "Effect": "Allow",
+                                    "Action": [
+                                        "ec2:DescribeInstanceAttribute",
+                                        "ec2:ModifyInstanceAttribute",
+                                        "ssm:UpdateInstanceInformation"
+                                    ],
+                                    "Resource": "*",
+                                    "Condition": {
+                                        "StringEquals": {
+                                            "aws:RequestTag/Project": {
+                                                "Ref": "ProjectTagValue"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            },
+            "Metadata": {
+                "AWS::CloudFormation::Designer": {
+                    "id": "9a5da83f-d26f-412b-aa03-b82e31027cae"
+                }
+            }
+        },
+        "EC2SG3RU0O": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "VpcId": {
+                    "Ref": "MyVpcId"
+                },
+                "GroupDescription": "Security group for Shadowsocks server - created via CloudFormation",
+                "Tags": [
+                    {
+                        "Key": "Project",
+                        "Value": {
+                            "Ref": "ProjectTagValue"
+                        }
+                    }
+                ],
+                "SecurityGroupEgress": [
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": 80,
+                        "ToPort": 80,
+                        "CidrIp": "0.0.0.0/0"
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": 443,
+                        "ToPort": 443,
+                        "CidrIp": "0.0.0.0/0"
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": 53,
+                        "ToPort": 53,
+                        "CidrIp": "1.1.1.1/32"
+                    },
+                    {
+                        "IpProtocol": "udp",
+                        "FromPort": 53,
+                        "ToPort": 53,
+                        "CidrIp": "1.1.1.1/32"
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": 53,
+                        "ToPort": 53,
+                        "CidrIp": "1.0.0.1/32"
+                    },
+                    {
+                        "IpProtocol": "udp",
+                        "FromPort": 53,
+                        "ToPort": 53,
+                        "CidrIp": "1.0.0.1/32"
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": 53,
+                        "ToPort": 53,
+                        "CidrIp": "8.8.8.8/32"
+                    },
+                    {
+                        "IpProtocol": "udp",
+                        "FromPort": 53,
+                        "ToPort": 53,
+                        "CidrIp": "8.8.8.8/32"
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": 53,
+                        "ToPort": 53,
+                        "CidrIp": "8.8.4.4/32"
+                    },
+                    {
+                        "IpProtocol": "udp",
+                        "FromPort": 53,
+                        "ToPort": 53,
+                        "CidrIp": "8.8.4.4/32"
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": 53,
+                        "ToPort": 53,
+                        "CidrIp": "208.67.222.222/32"
+                    },
+                    {
+                        "IpProtocol": "udp",
+                        "FromPort": 53,
+                        "ToPort": 53,
+                        "CidrIp": "208.67.222.222/32"
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": 53,
+                        "ToPort": 53,
+                        "CidrIp": "208.67.220.220/32"
+                    },
+                    {
+                        "IpProtocol": "udp",
+                        "FromPort": 53,
+                        "ToPort": 53,
+                        "CidrIp": "208.67.220.220/32"
+                    }
+                ],
+                "SecurityGroupIngress": [
+                    {
+                        "Fn::If": [
+                            "CreatePublicSSHRule",
+                            {
+                                "IpProtocol": "tcp",
+                                "FromPort": 22,
+                                "ToPort": 22,
+                                "CidrIp": "0.0.0.0/0"
+                            },
+                            {
+                                "Ref": "AWS::NoValue"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "Metadata": {
+                "AWS::CloudFormation::Designer": {
+                    "id": "4d1b36c6-d8b4-4dbc-a173-e749ec822592"
+                }
+            }
+        },
+        "EC2IZSAV": {
+            "Type": "AWS::EC2::Instance",
+            "Properties": {
+                "ImageId": {
+                    "Fn::FindInMap": [
+                        "RegionAMIMap",
+                        {
+                            "Ref": "AWS::Region"
+                        },
+                        "HVM64"
+                    ]
+                },
+                "UserData": {
+                    "Fn::Base64": {
+                        "Fn::Join": [
+                            "",
+                            [
+                                "#!/bin/bash -xe\n",
+                                "mkdir /home/ec2-user/aws-ss-config\n",
+                                "mkdir /home/ec2-user/config-backup\n",
+                                "echo ",
+                                {
+                                    "Fn::Base64": {
+                                        "Ref": "TempConfigPassword"
+                                    }
+                                },
+                                " > /home/ec2-user/aws-ss-config/config_password.tmp\n",
+                                "echo ",
+                                {
+                                    "Ref": "SSEndpoints"
+                                },
+                                " > /home/ec2-user/aws-ss-config/config_endpoints.tmp\n",
+                                "echo ",
+                                {
+                                    "Ref": "S3B1BPO1"
+                                },
+                                " > /home/ec2-user/aws-ss-config/s3_bucket.txt\n",
+                                "interface=$(route | grep '^default' | grep -o '[^ ]*$')\n",
+                                "mv /etc/sysconfig/network-scripts/ifcfg-$interface /home/ec2-user/config-backup/ifcfg-$interface.BAK\n",
+                                "echo \"DEVICE=$interface\n",
+                                "BOOTPROTO=dhcp\n",
+                                "ONBOOT=yes\n",
+                                "TYPE=Ethernet\n",
+                                "USERCTL=yes\n",
+                                "PEERDNS=yes\n",
+                                "DHCPV6C=yes\n",
+                                "NM_CONTROLLED=yes\n",
+                                "DHCPV6C_OPTIONS=-nw\n",
+                                "PERSISTENT_DHCLIENT=yes\n",
+                                "RES_OPTIONS='timeout:2 attempts:5'\n",
+                                "DHCP_ARP_CHECK=no\n",
+                                "DNS1='1.1.1.1'\n",
+                                "DNS2='1.0.0.1'\" | sudo tee /etc/sysconfig/network-scripts/ifcfg-$interface\n",
+                                "ifdown $interface && ifup $interface\n",
+                                "yum update -y\n",
+                                "yum install -y git\n",
+                                "git clone https://github.com/OllieGeek/aws-ss.git /opt/aws-ss\n",
+                                "chmod 755 /opt/aws-ss/*.sh\n",
+                                "chmod +x /opt/aws-ss/*.sh\n",
+                                "su - ec2-user /opt/aws-ss/install_ss_server.sh\n",
+                                "# Signal the status from cfn-init\n",
+                                "/opt/aws/bin/cfn-signal -e $? ",
+                                "         --stack ",
+                                {
+                                    "Ref": "AWS::StackName"
+                                },
+                                "         --resource EC2IZSAV ",
+                                "         --region ",
+                                {
+                                    "Ref": "AWS::Region"
+                                },
+                                "\n"
+                            ]
+                        ]
+                    }
+                },
+                "SecurityGroupIds": [
+                    {
+                        "Ref": "EC2SG3RU0O"
+                    }
+                ],
+                "KeyName": {
+                    "Ref": "MyKeyPair"
+                },
+                "IamInstanceProfile": {
+                    "Ref": "RootInstanceProfile"
+                },
+                "Tags": [
+                    {
+                        "Key": "Project",
+                        "Value": {
+                            "Ref": "ProjectTagValue"
+                        }
+                    }
+                ],
+                "InstanceType": {
+                    "Ref": "InstanceType"
+                }
+            },
+            "Metadata": {
+                "AWS::CloudFormation::Designer": {
+                    "id": "401b99d9-5513-4894-9927-bcd36a101e73"
+                }
+            },
+            "CreationPolicy": {
+                "ResourceSignal": {
+                    "Timeout": "PT10M"
+                }
+            }
+        },
+        "RootInstanceProfile": {
+            "Type": "AWS::IAM::InstanceProfile",
+            "Properties": {
+                "Path": "/",
+                "Roles": [
+                    {
+                        "Ref": "RootRole"
+                    }
+                ]
+            },
+            "Metadata": {
+                "AWS::CloudFormation::Designer": {
+                    "id": "a597ff90-511a-4fdb-aad9-e33890703b0a"
+                }
+            }
+        }
+    },
+    "Outputs": {
+        "S3WebsiteURL": {
+            "Description": "URL to get Shadowsocks configuration details",
+            "Value": {
+                "Fn::Join": [
+                    "",
+                    [
+                        "https://s3-",
+                        {
+                            "Ref": "AWS::Region"
+                        },
+                        ".amazonaws.com/",
+                        {
+                            "Ref": "S3B1BPO1"
+                        },
+                        "/index.html"
+                    ]
+                ]
+            }
+        },
+        "EC2PublicIP": {
+            "Description": "Shadowsocks server SSH",
+            "Value": {
+                "Fn::Join": [
+                    "",
+                    [
+                        "ec2-user@",
+                        {
+                            "Fn::GetAtt": [
+                                "EC2IZSAV",
+                                "PublicIp"
+                            ]
+                        }
+                    ]
+                ]
+            }
+        }
+    },
+    "Parameters": {
+        "MyVpcId": {
+            "Type": "AWS::EC2::VPC::Id"
+        },
+        "MySubnetID": {
+            "Description": "Must be in selected VPC and be a public subnet (have an Internet Gateway).",
+            "Type": "AWS::EC2::Subnet::Id"
+        },
+        "ProjectTagValue": {
+            "Default": "ShadowsocksService",
+            "Type": "String"
+        },
+        "MyKeyPair": {
+            "Type": "AWS::EC2::KeyPair::KeyName"
+        },
+        "InstanceType": {
+            "Type": "String",
+            "Default": "t3.micro",
+            "AllowedValues": [
+                "t3.micro",
+                "t3.small",
+                "t3.medium",
+                "m5.large"
+            ],
+            "Description": "Default is t3.micro, choose m5.large for most bandwidth (more expensive)."
+        },
+        "TempConfigPassword": {
+            "Description": "for secure retrieval of the Shadowsocks configuration details.",
+            "Default": "abcdeABCDE12345",
+            "Type": "String"
+        },
+        "SSEndpoints": {
+            "Default": "1",
+            "Type": "Number",
+            "MinValue": "1",
+            "MaxValue": "63535"
+        },
+        "PublicSSHRule": {
+            "Type": "String",
+            "Default": "Yes",
+            "AllowedValues": [
+                "Yes",
+                "No"
+            ],
+            "Description": "Choosing 'Yes' creates a 0.0.0.0/0:22 rule to the instance."
+        }
+    },
+    "Mappings": {
+        "RegionAMIMap": {
+            "eu-west-1": {
+                "HVM64": "ami-0bdb1d6c15a40392c"
+            },
+            "eu-west-2": {
+                "HVM64": "ami-e1768386"
+            },
+            "eu-west-3": {
+                "HVM64": "ami-06340c8c12baa6a09"
+            },
+            "us-east-1": {
+                "HVM64": "ami-04681a1dbd79675a5"
+            },
+            "us-east-2": {
+                "HVM64": "ami-0cf31d971a3ca20d6"
+            },
+            "us-west-1": {
+                "HVM64": "ami-0782017a917e973e7"
+            },
+            "us-west-2": {
+                "HVM64": "ami-6cd6f714"
+            },
+            "ap-south-1": {
+                "HVM64": "ami-00b6a8a2bd28daf19"
+            },
+            "ap-northeast-2": {
+                "HVM64": "ami-012566705322e9a8e"
+            },
+            "ap-southeast-1": {
+                "HVM64": "ami-01da99628f381e50a"
+            },
+            "ap-southeast-2": {
+                "HVM64": "ami-00e17d1165b9dd3ec"
+            },
+            "ap-northeast-1": {
+                "HVM64": "ami-08847abae18baa040"
+            },
+            "ca-central-1": {
+                "HVM64": "ami-ce1b96aa"
+            },
+            "eu-central-1": {
+                "HVM64": "ami-0f5dbc86dd9cbf7a8"
+            },
+            "sa-east-1": {
+                "HVM64": "ami-0ad7b0031d41ed4b9"
+            }
+        }
+    },
+    "Conditions": {
+        "CreatePublicSSHRule": {
+            "Fn::Equals": [
+                "Yes",
+                {
+                    "Ref": "PublicSSHRule"
+                }
+            ]
+        }
+    }
+}
