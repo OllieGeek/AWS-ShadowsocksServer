@@ -590,7 +590,8 @@
             "Default": "1",
             "Type": "Number",
             "MinValue": "1",
-            "MaxValue": "63535"
+            "MaxValue": "63535",
+            "Description": "Best to have one endpoint for each client."
         },
         "PublicSSHRule": {
             "Type": "String",

@@ -1,10 +1,16 @@
 <!DOCTYPE html>
 <html>
     <head>
+		<meta name="viewport" content="width=device-width, initial-scale=1">
         <meta charset="utf-8">
         <title>Shadowbox Configuration Decrypter</title>
 		<style>
-			body { width: 400px; margin: 0 auto; background-color: black; color: white; }
+			@media all and (max-width:640px){
+				body { width: 100% !important; margin-left:1em !important; margin-right:1em !important; }
+				.encrypted { width: 90% !important; }
+			}
+			
+			body { width: 400px; margin: 0 auto; background-color: black; color: white; overflow-x: hidden; }
 			a { color: lightblue; }
 			.main { padding-bottom: 2em; }
 			.container { width: 100%;word-break: break-all; padding: 0.5em; border: 1px solid white; border-radius: 3px; margin-bottom: 0.5em; }
