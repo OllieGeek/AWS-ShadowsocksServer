@@ -28,5 +28,3 @@ sudo chmod u=r,g=,o= /opt/shadowsocks/client-url_$shadowsocks_port.txt
 
 aws ec2 authorize-security-group-ingress --group-id $security_group_id --protocol tcp --port $shadowsocks_port --cidr 0.0.0.0/0 --region $region
 aws ec2 authorize-security-group-ingress --group-id $security_group_id --protocol udp --port $shadowsocks_port --cidr 0.0.0.0/0 --region $region
-
-sudo /opt/aws-ss/server-start_gen.sh

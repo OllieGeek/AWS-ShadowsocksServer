@@ -68,6 +68,8 @@ do
     /opt/aws-ss/create_ss_endpoint.sh
 done
 
+sudo /opt/aws-ss/server-start_gen.sh
+
 echo "[Unit]
 Description=Shadowsocks via aws-ss
 After=network.target

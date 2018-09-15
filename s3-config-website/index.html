@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Shadowbox Configuration Decrypter</title>
+		<style>
+			body { width: 400px; margin: 0 auto; background-color: black; color: white; }
+			a { color: lightblue; }
+			.main { padding-bottom: 2em; }
+			.container { width: 100%;word-break: break-all; padding: 0.5em; border: 1px solid white; border-radius: 3px; }
+			.blob { font-size:0.8em; }
+			.container p { font-size:0.8em; }
+			.container span { font-weight: bold; }
+			.encrypted { display: none; width:400px; }
+		</style>
+    </head>
+    <body>
+		<div class="main">
+			<h2>Shadowbox Configuration Decrypter</h2>
+			<p>
+				Enter 'TempConfigPassword' set in the CloudFormation template:<br /><br />
+				<input type="password" id="inputPassword" />
+				<input type="button" value="Decrypt" id="btnDecrypt" />
+			</p>
+		</div>
+		<div class="encrypted">INPUT_FROM_GENERATOR</div>
+
+        <script src="jquery-3.3.1.min.js" integrity="sha384-QjZDNDA1QUE5MTExN0FFRUQ5MkUxMDU1RDk1NjY1MDJFRUYzNzBFNTdFQUQ3NkQ4OTQ1RDlDQTgxRjJEQzQ4RkZDNjk5NkEzOEU5RTAxQTlERjk1RTgzRTQ4ODJGMjkz" crossorigin="anonymous"></script>
+        <script src="crypto-js.min.js" integrity="sha384-OTY5RTI0RDU1NDRBM0Q0RjVFMDY3M0RFM0UzOUM5RjRDRDkxMTc3OEJCM0MyREY0ODE3QjNCRDNFN0E1MDk1N0UwQzBCQzMxRDZEQkY5RjlDQjcxNzZEQzMxQTk5NkJC" crossorigin="anonymous"></script>
+		<script>		
+		$(document).ready(function() {
+			$("#inputPassword").keypress(function(e) {
+				if(e.which == 13) {
+					$("#btnDecrypt").click();
+				}
+			});
+			$("#btnDecrypt").on("click", function() {
+				var rawPass = $("#inputPassword").val();
+				var base64Pass = btoa(rawPass);
+				
+				var first = true;
+				var blobs = $("div.encrypted div.blob");
+				for(var i = 0; i < blobs.length; i++) {
+					var dec = decryptBlob(blobs[i].innerText, base64Pass);
+					if (dec === 0) {
+						alert("Incorrect password.");
+						break;
+					} else {
+						if (first) {
+							$("#inputPassword").prop("disabled", "disabled");
+							$("#btnDecrypt").prop("disabled", "disabled");
+							first = false;
+							$(".encrypted").show();
+						}
+						var thisContainer = $(blobs[i]).parent(".container");
+						var newHyper = $("<a href='"+dec+"'>");
+						newHyper.text(dec);
+						thisContainer.append($("<hr>"));
+						thisContainer.append(newHyper);
+						thisContainer.append($("<hr>"));
+						
+						thisContainer.append("Manual configuration:").append($("<br>"));
+						
+						var manualConfig = $("<p>");
+						
+						var decSplit = dec.split("@");
+						var ss_cipherPassB64 = decSplit[0].replace("ss://", "");
+						var ss_cipherPass = atob(ss_cipherPassB64).split(/:(.+)/);
+						
+						manualConfig.append("<span>Method:</span> ").append(ss_cipherPass[0]).append($("<br>"));
+						manualConfig.append("<span>Password:</span> ").append(ss_cipherPass[1]).append($("<br>"));
+						
+						var ss_serverDetails = decSplit[1].split("#");
+						manualConfig.append("<span>Server details:</span> ").append(ss_serverDetails[0]).append($("<br>"));
+						
+						var ss_name = decodeURIComponent(ss_serverDetails[1].trim());
+						manualConfig.append("<span>Name:</span> ").append(ss_name);
+						
+						thisContainer.append(manualConfig);
+					}
+				}
+			});
+		});
+		
+		function decryptBlob(data, password) {
+			var salt          = data.substring(16, 32),
+			enc           = data.substring(32, data.length),
+			derivedParams = CryptoJS.kdf.OpenSSL.execute(
+							password,
+							256/32,
+							128/32,
+							CryptoJS.enc.Hex.parse(salt)
+						  ),
+			cipherParams  = CryptoJS.lib.CipherParams.create({
+						   ciphertext : CryptoJS.enc.Hex.parse(enc)
+						 }),
+			decrypted     = CryptoJS.AES.decrypt(
+							cipherParams,
+							derivedParams.key,
+							{ iv : derivedParams.iv }
+						  );
+
+			decryptedHex = decrypted.toString();
+			if (decryptedHex.indexOf("73733a2f2f") == 0) {
+				return hex2a(decryptedHex);
+			}
+			return 0;
+		}
+		
+		function hex2a(hexx) {
+			var hex = hexx.toString();//force conversion
+			var str = '';
+			for (var i = 0; (i < hex.length && hex.substr(i, 2) !== '00'); i += 2)
+				str += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
+			return str;
+		}
+		</script>
+    </body>
+</html>
